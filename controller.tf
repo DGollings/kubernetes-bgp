@@ -4,7 +4,7 @@ variable "hostname" {
 
 // Setup the kubernetes controller node
 resource "packet_device" "k8s_controller" {
-  project_id       = packet_project.kubenet.id
+  project_id       = data.packet_project.kubenet.id
   facilities       = var.facilities
   plan             = var.controller_plan
   operating_system = "ubuntu_18_04"

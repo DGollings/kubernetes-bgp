@@ -2,13 +2,18 @@ provider "packet" {
   auth_token = var.auth_token
 }
 
-resource "packet_project" "kubenet" {
-  name = "k8s-bgp"
+# run once only
+# resource "packet_project" "kubenet" {
+#   name = "k8s-bgp"
 
-  bgp_config {
-    deployment_type = "local"
-    asn             = 65000
-  }
+#   bgp_config {
+#     deployment_type = "local"
+#     asn             = 65000
+#   }
+# }
+
+data "packet_project" "kubenet" {
+  name = "k8s-bgp"
 }
 
 variable "facilities" {

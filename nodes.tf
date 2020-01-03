@@ -1,5 +1,5 @@
 resource "packet_device" "k8s_workers" {
-  project_id       = packet_project.kubenet.id
+  project_id       = data.packet_project.kubenet.id
   facilities       = var.facilities
   count            = var.worker_count
   plan             = var.worker_plan
