@@ -15,16 +15,15 @@ cd /root
 curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.4.2 sh -
 cd $(ls -d istio-*)
 cp bin/istioctl /usr/local/sbin/
-istioctl manifest apply --set profile=demo
-
-curl https://raw.githubusercontent.com/projectcalico/calico/v3.11.1/master/manifests/alp/istio-inject-configmap-1.4.2.yaml -o istio-inject-configmap.yaml
-kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
-kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/alp/istio-app-layer-policy.yaml
-
-kubectl label namespace default istio-injection=enabled
+kubectl apply -f install/kubernetes/helm/istio-init/files/
 
 # REMOVE
+kubectl apply -f install/kubernetes/istio-demo.yaml
 kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
 kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
 kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 #/ REMOVE
+
+kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/alp/istio-inject-configmap-1.1.7.yaml
+kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/alp/istio-app-layer-policy.yaml
+kubectl label namespace default istio-injection=enabled
