@@ -8,7 +8,7 @@ resource "packet_reserved_ip_block" "load_balancer_ips" {
 # Enable BGP on each worker node
 resource "packet_bgp_session" "kube_bgp" {
   count          = var.worker_count
-  device_id      = packet_device.k8s_workers.*.id[count.index]
+  device_id      = data.packet_device.k8s_workers[count.index].device_id
   address_family = "ipv4"
 }
 
@@ -72,7 +72,7 @@ resource "null_resource" "calico_node_peers" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/calico/bgppeer-${count.index}.sh",
-      "/tmp/calico/bgppeer-${count.index}.sh ${element(packet_device.k8s_workers.*.hostname, count.index)} ${element(data.external.private_ipv4_gateway.*.result.peer_ip, count.index)}",
+      "/tmp/calico/bgppeer-${count.index}.sh ${element(data.packet_device.k8s_workers.*.hostname, count.index)} ${element(data.external.private_ipv4_gateway.*.result.peer_ip, count.index)}",
     ]
   }
 

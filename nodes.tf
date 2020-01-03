@@ -1,13 +1,33 @@
-resource "packet_device" "k8s_workers" {
-  project_id       = data.packet_project.kubenet.id
-  facilities       = var.facilities
+
+# Create a spot market request
+resource "packet_spot_market_request" "req" {
   count            = var.worker_count
-  plan             = var.worker_plan
-  operating_system = "ubuntu_18_04"
-  hostname         = format("%s-%s-%d", "${var.facilities[0]}", "worker", count.index)
-  billing_cycle    = "hourly"
-  tags             = ["kubernetes", "k8s", "worker"]
+  project_id       = data.packet_project.kubenet.id
+  max_bid_price    = 0.15
+  facilities       = var.facilities
+  devices_min      = 1
+  devices_max      = 1
+  wait_for_devices = true
+
+  instance_parameters {
+    hostname         = format("%s-%s-%d", "${var.facilities[0]}", "worker", count.index)
+    billing_cycle    = "hourly"
+    operating_system = "ubuntu_18_04"
+    plan             = var.worker_plan
+  }
 }
+
+data "packet_spot_market_request" "dreq" {
+  count      = var.worker_count
+  request_id = packet_spot_market_request.req[count.index].id
+}
+
+data "packet_device" "k8s_workers" {
+  # count     = length(data.packet_spot_market_request.dreq.device_ids)
+  count     = var.worker_count
+  device_id = data.packet_spot_market_request.dreq[count.index].device_ids[0]
+}
+
 
 # Using a null_resource so the packet_device doesn't not have to wait to be initially provisioned
 resource "null_resource" "setup_worker" {
@@ -15,7 +35,7 @@ resource "null_resource" "setup_worker" {
 
   connection {
     user = "root"
-    host = element(packet_device.k8s_workers.*.access_public_ipv4, count.index)
+    host = element(data.packet_device.k8s_workers.*.access_public_ipv4, count.index)
   }
 
   provisioner "file" {
@@ -70,6 +90,6 @@ data "external" "private_ipv4_gateway" {
   program = ["${path.module}/scripts/gateway.sh"]
 
   query = {
-    host = "${element(packet_device.k8s_workers.*.access_public_ipv4, count.index)}"
+    host = "${element(data.packet_device.k8s_workers.*.access_public_ipv4, count.index)}"
   }
 }
